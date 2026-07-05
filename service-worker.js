@@ -1,4 +1,4 @@
-const CACHE_NAME = 'plusone-shell-v1';
+const CACHE_NAME = 'plusone-shell-v2';
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -35,8 +35,12 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Cache-first for the app shell; never intercept anything else (no sports data
-// ever flows through the service worker -- it's local SQLite via sql.js, not fetch).
+// Network-first for the app shell, falling back to cache only when offline.
+// (Previously this was cache-first, which meant the very first cached copy of
+// the app would keep being served forever, even after files on disk changed,
+// unless this service-worker.js file's own bytes changed too. Network-first
+// means "online" always gets the current files; "offline" still gets the last
+// good cached snapshot -- the actual PWA offline guarantee this app needs.)
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
@@ -44,17 +48,14 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-    })
+    fetch(request)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request))
   );
 });
