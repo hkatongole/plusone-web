@@ -39,14 +39,16 @@ export async function renderMatchList({ query }) {
         <button type="submit">Apply</button>
       </form>
 
-      <table class="data-table">
-        <thead>
-          <tr><th>Date</th><th>League</th><th>Home</th><th></th><th>Away</th><th>GW</th></tr>
-        </thead>
-        <tbody>
-          ${rows.map(matchRow).join('') || `<tr><td colspan="6">No matches match these filters.</td></tr>`}
-        </tbody>
-      </table>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr><th>Date</th><th>League</th><th>Home</th><th></th><th>Away</th><th>GW</th></tr>
+          </thead>
+          <tbody>
+            ${rows.map(matchRow).join('') || `<tr><td colspan="6">No matches match these filters.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
 
       <nav class="pagination">
         ${page > 1 ? `<a href="#/matches?page=${page - 1}${league ? '&league=' + league : ''}${season ? '&season=' + season : ''}">&larr; Prev</a>` : ''}

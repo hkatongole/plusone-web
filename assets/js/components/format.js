@@ -45,3 +45,14 @@ export function scoreline(homeScore, awayScore) {
   }
   return `${homeScore}\u2013${awayScore}`;
 }
+
+/** players.nationality is stored as "es ESP" -- a lowercase flag-icon code
+ *  (meant for a flag sprite this app doesn't have) followed by the actual
+ *  3-letter code. Showing both wraps awkwardly in a narrow table cell, so
+ *  just show the readable code. Falls back to the raw value for any other
+ *  shape, since other backups/leagues may format this differently. */
+export function formatNationality(value) {
+  if (!value) return '\u2014';
+  const match = /^[a-z]{2,3}\s+([A-Z]{2,4})$/.exec(value.trim());
+  return match ? match[1] : value;
+}

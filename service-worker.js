@@ -10,6 +10,7 @@ const SHELL_ASSETS = [
   './assets/js/components/badges.js',
   './assets/js/components/format.js',
   './assets/js/db/storageAdapter.js',
+  './assets/js/db/logoRepository.js',
   './assets/js/db/repositories/baseRepository.js',
   './assets/js/db/repositories/matchRepository.js',
   './assets/js/db/repositories/teamRepository.js',

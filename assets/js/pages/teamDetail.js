@@ -1,6 +1,6 @@
 import { teamRepository } from '../db/repositories/teamRepository.js';
 import { teamBadge, leagueBadge } from '../components/badges.js';
-import { formatPct, formatDate, scoreline, todayISO } from '../components/format.js';
+import { formatPct, formatDate, scoreline, todayISO, formatNationality } from '../components/format.js';
 import { storage } from '../db/storageAdapter.js';
 
 const TABS = [
@@ -251,19 +251,19 @@ export async function renderTeamSquad({ team }) {
       <h3>Squad ${stats?.season ? `&middot; ${stats.season}` : ''} <span class="panel__count">${squad.length}</span></h3>
       ${
         squad.length
-          ? `<table class="data-table data-table--compact">
+          ? `<div class="table-scroll"><table class="data-table data-table--compact">
               <thead><tr><th>Player</th><th>Pos</th><th>Nat.</th><th>Age</th><th>Apps</th><th>Goals</th><th>Assists</th></tr></thead>
               <tbody>
                 ${squad
                   .map(
                     (p) => `<tr>
-                      <td>${p.player}</td><td>${p.position ?? '\u2014'}</td><td>${p.nationality ?? '\u2014'}</td>
+                      <td>${p.player}</td><td>${p.position ?? '\u2014'}</td><td>${formatNationality(p.nationality)}</td>
                       <td>${p.age ?? '\u2014'}</td><td>${p.games ?? '\u2014'}</td><td>${p.goals ?? '\u2014'}</td><td>${p.assists ?? '\u2014'}</td>
                     </tr>`
                   )
                   .join('')}
               </tbody>
-             </table>`
+             </table></div>`
           : `<p class="empty-state__inline">No squad information available for this team.</p>`
       }
     </div>

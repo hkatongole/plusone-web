@@ -1,10 +1,12 @@
+import { logoRepository } from '../db/logoRepository.js';
+
 /**
- * Team/league "badge" rendering. The real Media Library (Section 12.5) is a
- * backend concern this phase doesn't build yet, so every badge currently
- * renders the fallback: a monogram initials chip, styled consistently, never
- * a broken-image icon. Once /media/resolve exists, swap the `<img>` branch in
- * here — nothing else in the app should need to change, since pages call
- * teamBadge()/leagueBadge() rather than reaching for <img> directly.
+ * Team/league "badge" rendering. Real crests come from the team_logos table
+ * (hotlinked from a third-party CDN) when a row exists for that team; the
+ * monogram-on-hue fallback still covers everything else -- teams with no
+ * logo row, leagues (no per-league logo source exists), players (silhouette),
+ * and any image that 404s at request time (inline onerror swap, since these
+ * are external URLs sql.js has no control over).
  */
 function initials(name = '') {
   return name
@@ -21,12 +23,29 @@ function hashHue(str = '') {
   return h;
 }
 
-export function teamBadge(name, { size = 'md' } = {}) {
-  if (!name) return `<span class="badge badge--${size} badge--empty">?</span>`;
+function monogram(name, size) {
   const hue = hashHue(name);
   return `<span class="badge badge--${size}" style="--badge-hue:${hue}" title="${escapeHtml(name)}">${escapeHtml(
     initials(name)
   )}</span>`;
+}
+
+export function teamBadge(name, { size = 'md' } = {}) {
+  if (!name) return `<span class="badge badge--${size} badge--empty">?</span>`;
+  const logoUrl = logoRepository.get(name);
+  if (!logoUrl) return monogram(name, size);
+
+  // Render both: the real crest, and a hidden monogram fallback right behind it.
+  // If the hotlinked image 404s or fails, onerror hides the <img> and reveals
+  // the fallback -- no JS wiring needed elsewhere, no flash of broken-image icon.
+  return `
+    <span class="badge-wrap badge-wrap--${size}">
+      <img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(name)}" title="${escapeHtml(name)}"
+           class="badge-img badge-img--${size}" loading="lazy"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+      <span class="badge badge--${size}" style="--badge-hue:${hashHue(name)}; display:none;">${escapeHtml(initials(name))}</span>
+    </span>
+  `.trim();
 }
 
 export function leagueBadge(name, { size = 'sm' } = {}) {

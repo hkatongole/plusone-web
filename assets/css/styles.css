@@ -105,6 +105,17 @@ button {
 .badge--player { background: var(--ink-800); color: var(--paper-400); }
 .badge--empty { background: var(--ink-800); color: var(--paper-400); }
 
+.badge-wrap { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.badge-img { object-fit: contain; background: var(--paper-100); border-radius: 4px; padding: 2px; }
+.badge-img--sm { width: 20px; height: 20px; }
+.badge-img--md { width: 28px; height: 28px; }
+.badge-img--lg { width: 48px; height: 48px; padding: 4px; }
+
+/* Tables: prevent cell content (e.g. "es ESP") from wrapping into a cramped
+   multi-line mess on narrow screens -- scroll horizontally instead. */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.data-table th, .data-table td { white-space: nowrap; }
+
 /* Tables */
 .data-table { width: 100%; border-collapse: collapse; background: var(--ink-900); border-radius: var(--radius-md); overflow: hidden; }
 .data-table th, .data-table td { padding: var(--space-2) var(--space-3); text-align: left; border-bottom: 1px solid var(--line-700); font-size: 13px; }
@@ -121,7 +132,7 @@ button {
 .pagination { display: flex; gap: var(--space-3); align-items: center; margin-top: var(--space-4); color: var(--paper-400); font-size: 13px; }
 
 /* Panels (match detail) */
-.panel { background: var(--ink-900); border: 1px solid var(--line-700); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4); }
+.panel { background: var(--ink-900); border: 1px solid var(--line-700); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4); overflow-x: auto; }
 .panel h3 { margin-top: 0; font-family: var(--font-display); }
 
 .match-detail__header { display: flex; align-items: center; gap: var(--space-2); }
