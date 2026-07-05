@@ -1,4 +1,5 @@
 import { matchRepository } from '../db/repositories/matchRepository.js';
+import { teamRepository } from '../db/repositories/teamRepository.js';
 import { teamBadge, leagueBadge } from '../components/badges.js';
 import { formatPct, formatDateTime, dataAsOfLabel, scoreline } from '../components/format.js';
 import { storage } from '../db/storageAdapter.js';
@@ -14,6 +15,9 @@ export async function renderMatchDetail({ id }) {
   const { match, prediction, odds, weather, injuries } = bundle;
   const asOf = [prediction?.predicted_at, prediction?.evaluated_at, match.scraped_at].filter(Boolean).sort().reverse()[0];
 
+  const homeStats = teamRepository.statsFor(match.home_team, match.season);
+  const awayStats = teamRepository.statsFor(match.away_team, match.season);
+
   return `
     <section class="page page--match-detail">
       <a class="back-link" href="#/matches">&larr; Back to Match Explorer</a>
@@ -27,13 +31,15 @@ export async function renderMatchDetail({ id }) {
         <div class="match-detail__center">
           <div class="match-detail__score">${scoreline(match.home_score, match.away_score)}</div>
           <div class="match-detail__date">${formatDateTime(match.start_time || match.match_date)}</div>
-          ${match.home_xg != null ? `<div class="match-detail__xg">xG ${match.home_xg} &ndash; ${match.away_xg}</div>` : ''}
+          ${match.home_xg != null ? `<div class="match-detail__xg">Match xG ${match.home_xg} &ndash; ${match.away_xg}</div>` : ''}
         </div>
         <div class="match-detail__team">${teamBadge(match.away_team, { size: 'lg' })}<h2>${match.away_team}</h2></div>
       </div>
 
       ${prediction ? engineBreakdown(prediction) : `<div class="empty-state"><p>No prediction on record for this match.</p></div>`}
+      ${prediction ? expectedGoalsSection(prediction) : ''}
       ${prediction ? h2hSection(prediction) : ''}
+      ${homeStats || awayStats ? teamComparisonSection(match.home_team, match.away_team, homeStats, awayStats) : ''}
       ${odds ? oddsSection(odds) : ''}
       ${weather ? weatherSection(weather) : ''}
       ${injuries?.length ? injuriesSection(injuries) : ''}
@@ -88,6 +94,7 @@ function engineBreakdown(p) {
              </div>`
           : ''
       }
+      ${doubleChanceBlock(p)}
       ${
         p.actual_outcome
           ? `<div class="engine-grading">
@@ -96,6 +103,104 @@ function engineBreakdown(p) {
              </div>`
           : ''
       }
+    </div>
+  `;
+}
+
+/** Double Chance isn't a stored column -- it's the sum of two already-stored consensus
+ *  probabilities (1X = home+draw, 12 = home+away, X2 = draw+away). Labeled as derived so
+ *  it's clear this is arithmetic on the existing consensus numbers, not a new prediction. */
+function doubleChanceBlock(p) {
+  if (p.consensus_home_prob == null || p.consensus_draw_prob == null || p.consensus_away_prob == null) return '';
+  const dc1x = p.consensus_home_prob + p.consensus_draw_prob;
+  const dc12 = p.consensus_home_prob + p.consensus_away_prob;
+  const dcx2 = p.consensus_draw_prob + p.consensus_away_prob;
+  return `
+    <div class="double-chance">
+      <h4>Double Chance <span class="derived-tag">derived from consensus probabilities</span></h4>
+      <div class="double-chance__row">
+        <span class="pill">1X ${formatPct(dc1x)}</span>
+        <span class="pill">12 ${formatPct(dc12)}</span>
+        <span class="pill">X2 ${formatPct(dcx2)}</span>
+      </div>
+    </div>
+  `;
+}
+
+/** Expected goals (dc_expected_home/away) and the model's top scoreline picks
+ *  (score_pred_1..3 / score_prob_1..3) -- all real prediction_log columns that
+ *  were being fetched but never rendered anywhere in the phase-1 build. */
+function expectedGoalsSection(p) {
+  const hasXg = p.dc_expected_home != null && p.dc_expected_away != null;
+  const scores = [
+    [p.score_pred_1, p.score_prob_1],
+    [p.score_pred_2, p.score_prob_2],
+    [p.score_pred_3, p.score_prob_3],
+  ].filter(([pred]) => pred != null);
+  if (!hasXg && scores.length === 0) return '';
+
+  return `
+    <div class="panel">
+      <h3>Expected Goals &amp; Most Likely Scores</h3>
+      ${hasXg ? `<p class="expected-goals">Model expected goals: <strong>${p.dc_expected_home}</strong> &ndash; <strong>${p.dc_expected_away}</strong></p>` : ''}
+      ${
+        scores.length
+          ? `<div class="score-picks">
+              ${scores
+                .map(
+                  ([pred, prob], i) => `
+                <div class="score-pick ${i === 0 ? 'score-pick--top' : ''}">
+                  <span class="score-pick__score">${pred}</span>
+                  <span class="score-pick__prob">${formatPct(prob)}</span>
+                </div>`
+                )
+                .join('')}
+             </div>`
+          : ''
+      }
+    </div>
+  `;
+}
+
+/** Side-by-side team_stats comparison for the two teams in this match, scoped to
+ *  the match's season. Uses teamRepository, which already had this query written
+ *  but no page was calling it. */
+function teamComparisonSection(homeTeam, awayTeam, homeStats, awayStats) {
+  if (!homeStats && !awayStats) return '';
+  const metrics = [
+    { label: 'Points', key: 'points' },
+    { label: 'Win rate', key: 'win_rate', fmt: formatPct },
+    { label: 'Goals/game', key: 'goals_per_game' },
+    { label: 'Conceded/game', key: 'conceded_per_game' },
+    { label: 'Home goals/game', key: 'home_goals_pg' },
+    { label: 'Away goals/game', key: 'away_goals_pg' },
+    { label: 'Clean sheets', key: 'clean_sheets' },
+    { label: 'Possession %', key: 'possession_avg' },
+    { label: 'xG/game', key: 'xg_per_game' },
+    { label: 'Shots on target/game', key: 'shots_on_target_pg' },
+  ];
+  const dash = (v, fmt) => (v == null ? '\u2014' : fmt ? fmt(v) : v);
+  const rows = metrics
+    .map((m) => {
+      const h = homeStats?.[m.key];
+      const a = awayStats?.[m.key];
+      if (h == null && a == null) return '';
+      return `<tr><td>${m.label}</td><td>${dash(h, m.fmt)}</td><td>${dash(a, m.fmt)}</td></tr>`;
+    })
+    .join('');
+  if (!rows) return '';
+  const record = (s) => (s ? `${s.wins ?? 0}W ${s.draws ?? 0}D ${s.losses ?? 0}L` : '\u2014');
+
+  return `
+    <div class="panel">
+      <h3>Team Comparison${homeStats?.season ? ` &middot; ${homeStats.season}` : ''}</h3>
+      <table class="data-table data-table--compact">
+        <thead><tr><th></th><th>${homeTeam}</th><th>${awayTeam}</th></tr></thead>
+        <tbody>
+          <tr><td>Record</td><td>${record(homeStats)}</td><td>${record(awayStats)}</td></tr>
+          ${rows}
+        </tbody>
+      </table>
     </div>
   `;
 }

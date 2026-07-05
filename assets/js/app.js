@@ -3,6 +3,17 @@ import { Router } from './router/router.js';
 import { renderHome } from './pages/home.js';
 import { renderMatchList } from './pages/matchExplorer.js';
 import { renderMatchDetail } from './pages/matchDetail.js';
+import { renderTeamDirectory } from './pages/teamExplorer.js';
+import {
+  renderTeamOverview,
+  renderTeamFixtures,
+  renderTeamResults,
+  renderTeamStatistics,
+  renderTeamSquad,
+  renderTeamPredictions,
+  renderTeamOdds,
+  renderTeamHistory,
+} from './pages/teamDetail.js';
 
 // Single application bootstrap namespace (Section 13.9) -- the one allowed global.
 window.PlusOne = window.PlusOne || {};
@@ -41,7 +52,16 @@ async function boot() {
     router
       .register('/', renderHome)
       .register('/matches', renderMatchList)
-      .register('/matches/:id', renderMatchDetail);
+      .register('/matches/:id', renderMatchDetail)
+      .register('/teams', renderTeamDirectory)
+      .register('/teams/:team', renderTeamOverview)
+      .register('/teams/:team/fixtures', renderTeamFixtures)
+      .register('/teams/:team/results', renderTeamResults)
+      .register('/teams/:team/statistics', renderTeamStatistics)
+      .register('/teams/:team/players', renderTeamSquad)
+      .register('/teams/:team/predictions', renderTeamPredictions)
+      .register('/teams/:team/odds', renderTeamOdds)
+      .register('/teams/:team/history', renderTeamHistory);
     window.PlusOne.router = router;
 
     logStep('Initializing sql.js (WASM runtime)...');
@@ -150,14 +170,23 @@ document.addEventListener('click', (e) => {
 
 // Filter bar submit -> re-navigate with query params (Match Explorer).
 document.addEventListener('submit', (e) => {
-  if (e.target.id !== 'match-filter-form') return;
+  const id = e.target.id;
+  if (!['match-filter-form', 'team-filter-form', 'team-results-filter-form'].includes(id)) return;
   e.preventDefault();
   const data = new FormData(e.target);
   const params = new URLSearchParams();
   for (const [key, value] of data.entries()) {
     if (value) params.set(key, value);
   }
-  location.hash = `#/matches?${params.toString()}`;
+  const qs = params.toString();
+  if (id === 'match-filter-form') {
+    location.hash = `#/matches${qs ? '?' + qs : ''}`;
+  } else if (id === 'team-filter-form') {
+    location.hash = `#/teams${qs ? '?' + qs : ''}`;
+  } else if (id === 'team-results-filter-form') {
+    const team = e.target.dataset.team;
+    location.hash = `#/teams/${team}/results${qs ? '?' + qs : ''}`;
+  }
 });
 
 boot();

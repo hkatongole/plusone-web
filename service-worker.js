@@ -17,6 +17,8 @@ const SHELL_ASSETS = [
   './assets/js/pages/home.js',
   './assets/js/pages/matchExplorer.js',
   './assets/js/pages/matchDetail.js',
+  './assets/js/pages/teamExplorer.js',
+  './assets/js/pages/teamDetail.js',
   './database/sql-wasm.js',
   './database/sql-wasm.wasm',
 ];
