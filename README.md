@@ -37,6 +37,37 @@ Node/sql.js harness before shipping, not just written and hoped for):**
     result), `/teams/{name}/statistics` (every team_stats column present),
     `/teams/{name}/players` (squad), `/teams/{name}/predictions`,
     `/teams/{name}/odds`, `/teams/{name}/history` (season-by-season).
+  - **Player Explorer** — `/players` directory (search + league/position/season
+    filters, paginated) and `/players/{name}` with `/statistics`, `/matches`,
+    `/seasons`, `/teams` sub-routes. Players have no stable cross-season ID in
+    this schema, so profiles are name-keyed like teams. Mid-season transfers
+    are real in this data (e.g. a player can have two rows in the same season
+    for two different clubs) and are shown exactly as recorded, never merged
+    or inferred — verified against an actual transfer case in the data.
+    `/players/{name}/matches` honestly reports that match-by-match appearances
+    aren't available (the `players` table is season totals only, and
+    `team_lineups`, which could supply this, is empty in every export seen so
+    far) rather than approximating one from season stats.
+  - Team badges now show real crests from the `team_logos` table when present
+    (falls back to the monogram if a team has no logo row, or if the hotlinked
+    image fails to load).
+  - **League & Competition Explorer** — `/leagues` directory and, per
+    competition, all 9 spec sub-routes: overview, `/standings` (from
+    `team_stats`, ordered by points then goal difference — not re-derived from
+    raw results), `/fixtures`, `/results`, `/teams`, `/players`, `/statistics`
+    (goals/match, home/away/draw split via SQL aggregation over `matches`;
+    cards/corners only when `historical_results` actually has rows for that
+    league, which it doesn't in any backup seen so far), `/predictions`
+    (volume/distribution by pick and confidence tier — never a computed
+    accuracy figure beyond what `consensus_correct` etc. already store),
+    `/odds`, `/seasons`. Two notes: **country** is omitted everywhere — it
+    isn't present anywhere in this schema, and inventing a name→country lookup
+    table would risk confidently showing wrong information for exactly the
+    leagues most likely to be viewed (Premier League, Serie A, La Liga, etc.
+    don't contain their country in the name). **Competition type** (Domestic
+    League/Cup/International/Youth/Women's) is a lightweight regex read of the
+    league's own name text, not a per-league lookup table — labeled as a
+    best-effort inference, not authoritative.
 - **Shell:** `index.html`, `manifest.json`, `service-worker.js` (network-first
   with offline cache fallback — an earlier cache-first version could get stuck
   serving a stale build forever; fixed), dark "data desk" visual direction in
@@ -48,16 +79,22 @@ Everything requiring a **server** — auth, the write-side admin panel
 client-only SQLite reader by construction and needs the Node/Express service
 in spec Section 13.
 
-On the client side, per spec Section 4's remaining items: **Player Explorer**
-(4), **League & Competition Explorer** (5), **Prediction & Odds Explorer**
-(6), **Value/Safe Bets** (7, though `predictionRepository.valueBets()` is
-already written and query-tested), **Model Performance & Calibration** (8,
+On the client side, per spec Section 4's remaining items: **Prediction & Odds
+Explorer** (6), **Value/Safe Bets** (7, though `predictionRepository.valueBets()`
+is already written and query-tested), **Model Performance & Calibration** (8,
 `engineAccuracy()`/`engineWeightHistory()` already written), **Injuries** as
 its own page (9, currently only shown per-match), **How Predictions Work**
 (10), **Terms of Service** (11), **Privacy Policy** (12). Also not yet built:
 the Poisson-derived secondary markets (Over/Under, BTTS%) and heuristic Risk
 Flags seen in the reference extension — legitimate to add, but a distinct
 feature from anything above.
+
+**A schema landmine worth knowing about:** `match_odds.season` has been
+observed in a compact format (`'2526'`) while `matches.season`/
+`team_stats.season` use `'2025-2026'` for the same season — comparing them
+directly would silently return zero rows. `leagueRepository.oddsPage()`
+deliberately doesn't filter by season to avoid this; documented inline for
+whoever adds that filter later.
 
 ## Running it
 Service workers and OPFS both require a real origin, not `file://`:
@@ -82,10 +119,13 @@ plusone-web/
     app.js               boot sequence, DB import wiring, router registration
     router/router.js      tiny hash router
     db/storageAdapter.js  the only module allowed to touch sql.js
-    db/repositories/       matchRepository, teamRepository, predictionRepository, baseRepository
-    components/            badges.js (team/league/player fallback art), format.js
+    db/repositories/       matchRepository, teamRepository, playerRepository,
+                            leagueRepository, predictionRepository, baseRepository
+    components/            badges.js (real crests via team_logos + fallback art), format.js
     pages/                  home.js, matchExplorer.js, matchDetail.js,
-                            teamExplorer.js, teamDetail.js
+                            teamExplorer.js, teamDetail.js,
+                            playerExplorer.js, playerDetail.js,
+                            leagueExplorer.js, leagueDetail.js
 ```
 
 ## Data model changes

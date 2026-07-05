@@ -14,6 +14,27 @@ import {
   renderTeamOdds,
   renderTeamHistory,
 } from './pages/teamDetail.js';
+import { renderPlayerDirectory } from './pages/playerExplorer.js';
+import {
+  renderPlayerOverview,
+  renderPlayerStatistics,
+  renderPlayerMatches,
+  renderPlayerSeasons,
+  renderPlayerTeams,
+} from './pages/playerDetail.js';
+import { renderLeagueDirectory } from './pages/leagueExplorer.js';
+import {
+  renderLeagueOverview,
+  renderLeagueStandings,
+  renderLeagueFixtures,
+  renderLeagueResults,
+  renderLeagueTeams,
+  renderLeaguePlayers,
+  renderLeagueStatistics,
+  renderLeaguePredictions,
+  renderLeagueOdds,
+  renderLeagueSeasons,
+} from './pages/leagueDetail.js';
 
 // Single application bootstrap namespace (Section 13.9) -- the one allowed global.
 window.PlusOne = window.PlusOne || {};
@@ -61,7 +82,24 @@ async function boot() {
       .register('/teams/:team/players', renderTeamSquad)
       .register('/teams/:team/predictions', renderTeamPredictions)
       .register('/teams/:team/odds', renderTeamOdds)
-      .register('/teams/:team/history', renderTeamHistory);
+      .register('/teams/:team/history', renderTeamHistory)
+      .register('/players', renderPlayerDirectory)
+      .register('/players/:player', renderPlayerOverview)
+      .register('/players/:player/statistics', renderPlayerStatistics)
+      .register('/players/:player/matches', renderPlayerMatches)
+      .register('/players/:player/seasons', renderPlayerSeasons)
+      .register('/players/:player/teams', renderPlayerTeams)
+      .register('/leagues', renderLeagueDirectory)
+      .register('/leagues/:league', renderLeagueOverview)
+      .register('/leagues/:league/standings', renderLeagueStandings)
+      .register('/leagues/:league/fixtures', renderLeagueFixtures)
+      .register('/leagues/:league/results', renderLeagueResults)
+      .register('/leagues/:league/teams', renderLeagueTeams)
+      .register('/leagues/:league/players', renderLeaguePlayers)
+      .register('/leagues/:league/statistics', renderLeagueStatistics)
+      .register('/leagues/:league/predictions', renderLeaguePredictions)
+      .register('/leagues/:league/odds', renderLeagueOdds)
+      .register('/leagues/:league/seasons', renderLeagueSeasons);
     window.PlusOne.router = router;
 
     logStep('Initializing sql.js (WASM runtime)...');
@@ -171,7 +209,7 @@ document.addEventListener('click', (e) => {
 // Filter bar submit -> re-navigate with query params (Match Explorer).
 document.addEventListener('submit', (e) => {
   const id = e.target.id;
-  if (!['match-filter-form', 'team-filter-form', 'team-results-filter-form'].includes(id)) return;
+  if (!['match-filter-form', 'team-filter-form', 'team-results-filter-form', 'player-filter-form', 'league-season-form', 'league-results-filter-form'].includes(id)) return;
   e.preventDefault();
   const data = new FormData(e.target);
   const params = new URLSearchParams();
@@ -186,6 +224,15 @@ document.addEventListener('submit', (e) => {
   } else if (id === 'team-results-filter-form') {
     const team = e.target.dataset.team;
     location.hash = `#/teams/${team}/results${qs ? '?' + qs : ''}`;
+  } else if (id === 'player-filter-form') {
+    location.hash = `#/players${qs ? '?' + qs : ''}`;
+  } else if (id === 'league-season-form') {
+    const league = e.target.dataset.league;
+    const target = e.target.dataset.target;
+    location.hash = `#/leagues/${league}/${target}${qs ? '?' + qs : ''}`;
+  } else if (id === 'league-results-filter-form') {
+    const league = e.target.dataset.league;
+    location.hash = `#/leagues/${league}/results${qs ? '?' + qs : ''}`;
   }
 });
 
