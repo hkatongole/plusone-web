@@ -8,20 +8,12 @@ import { renderMatchDetail } from './pages/matchDetail.js';
 window.PlusOne = window.PlusOne || {};
 
 /**
- * On-phone debugging: there's no devtools console available when testing over
- * Termux + a phone browser with no PC attached, so every boot step logs to a
- * visible <pre id="boot-log"> on the splash screen as well as the real console.
- * This is intentionally left in (not stripped for "production") because this
- * app has no build step -- what ships is what runs.
+ * Boot-step logging. Kept as plain console output now that devtools console
+ * access is available -- the on-screen panel this used to also write to was
+ * only needed as a workaround for phone-only debugging without a console.
  */
 function logStep(msg) {
-  const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
-  console.log(line);
-  const el = document.getElementById('boot-log');
-  if (el) {
-    el.textContent += line + '\n';
-    el.scrollTop = el.scrollHeight;
-  }
+  console.log(`[${new Date().toLocaleTimeString()}] ${msg}`);
 }
 
 window.addEventListener('error', (e) => logStep(`window error: ${e.message}`));
@@ -81,7 +73,7 @@ async function boot() {
       <div class="empty-state empty-state--error">
         <h2>Something went wrong starting the app</h2>
         <p>${err.message}</p>
-        <p>Check the log on the splash screen (reload to see it again) for details.</p>
+        <p>Check the browser console for details.</p>
       </div>`;
   }
 }

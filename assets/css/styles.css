@@ -33,21 +33,6 @@ button {
   border: 2px solid var(--signal-amber); border-radius: 50%;
   width: 72px; height: 72px; display: flex; align-items: center; justify-content: center;
 }
-.boot-log {
-  margin-top: var(--space-4);
-  width: min(90vw, 480px);
-  max-height: 35vh;
-  overflow-y: auto;
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--paper-400);
-  background: var(--ink-900);
-  border: 1px solid var(--line-700);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  white-space: pre-wrap;
-  text-align: left;
-}
 
 /* Shell */
 .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
