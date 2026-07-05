@@ -7,29 +7,82 @@ import { renderMatchDetail } from './pages/matchDetail.js';
 // Single application bootstrap namespace (Section 13.9) -- the one allowed global.
 window.PlusOne = window.PlusOne || {};
 
+/**
+ * On-phone debugging: there's no devtools console available when testing over
+ * Termux + a phone browser with no PC attached, so every boot step logs to a
+ * visible <pre id="boot-log"> on the splash screen as well as the real console.
+ * This is intentionally left in (not stripped for "production") because this
+ * app has no build step -- what ships is what runs.
+ */
+function logStep(msg) {
+  const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  console.log(line);
+  const el = document.getElementById('boot-log');
+  if (el) {
+    el.textContent += line + '\n';
+    el.scrollTop = el.scrollHeight;
+  }
+}
+
+window.addEventListener('error', (e) => logStep(`window error: ${e.message}`));
+window.addEventListener('unhandledrejection', (e) =>
+  logStep(`unhandled rejection: ${e.reason?.message || e.reason}`)
+);
+
+/** Never let a single slow/hung step (e.g. a WASM compile stall) freeze the splash forever. */
+function withTimeout(promise, ms, label) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`Timed out after ${ms}ms waiting for: ${label}`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 async function boot() {
-  registerServiceWorker();
-
+  logStep('Booting PlusOne Analytics...');
   const outlet = document.getElementById('app-outlet');
-  const router = new Router(outlet);
-  router
-    .register('/', renderHome)
-    .register('/matches', renderMatchList)
-    .register('/matches/:id', renderMatchDetail);
 
-  window.PlusOne.router = router;
+  try {
+    registerServiceWorker();
 
-  setSplashVisible(true);
-  await storage.init().catch((err) => console.error('sql.js init failed:', err));
-  const restored = await storage.restoreFromOPFS();
-  setSplashVisible(false);
+    const router = new Router(outlet);
+    router
+      .register('/', renderHome)
+      .register('/matches', renderMatchList)
+      .register('/matches/:id', renderMatchDetail);
+    window.PlusOne.router = router;
 
-  updateFreshnessBadge();
-  wireDbImport();
-  router.start('/');
+    logStep('Initializing sql.js (WASM runtime)...');
+    try {
+      await withTimeout(storage.init(), 10000, 'sql.js init');
+      logStep('sql.js ready.');
+    } catch (err) {
+      logStep(`sql.js init failed or timed out: ${err.message}`);
+    }
 
-  if (restored) {
-    console.info('Sports database restored from OPFS:', storage.getSummary());
+    logStep('Checking for a previously saved database (OPFS)...');
+    let restored = false;
+    try {
+      restored = await withTimeout(storage.restoreFromOPFS(), 6000, 'OPFS restore');
+      logStep(restored ? 'Restored a saved database from OPFS.' : 'No saved database found (first run).');
+    } catch (err) {
+      logStep(`OPFS restore skipped: ${err.message}`);
+    }
+
+    setSplashVisible(false);
+    updateFreshnessBadge();
+    wireDbImport();
+    router.start('/');
+    logStep('App ready.');
+  } catch (err) {
+    logStep(`Boot failed: ${err.message}`);
+    setSplashVisible(false); // never leave the user staring at a spinner forever
+    outlet.innerHTML = `
+      <div class="empty-state empty-state--error">
+        <h2>Something went wrong starting the app</h2>
+        <p>${err.message}</p>
+        <p>Check the log on the splash screen (reload to see it again) for details.</p>
+      </div>`;
   }
 }
 
@@ -72,11 +125,13 @@ function wireDbImport() {
 async function handleImport(file) {
   try {
     setSplashVisible(true);
+    logStep(`Importing ${file.name}...`);
     await storage.importFile(file);
+    logStep('Import complete.');
     updateFreshnessBadge();
     window.PlusOne.router.navigate('/');
   } catch (err) {
-    console.error('Import failed:', err);
+    logStep(`Import failed: ${err.message}`);
     alert(err.message || 'Could not load that file.');
   } finally {
     setSplashVisible(false);
@@ -86,8 +141,10 @@ async function handleImport(file) {
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js').catch((err) => {
-      console.warn('Service worker registration failed:', err);
+      logStep(`Service worker registration failed (non-fatal): ${err.message}`);
     });
+  } else {
+    logStep('Service workers not available in this context (may be a non-secure origin).');
   }
 }
 
