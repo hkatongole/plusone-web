@@ -1,0 +1,25 @@
+:root {
+  --ink-950: #0B1220;
+  --ink-900: #121B2E;
+  --ink-800: #1B2740;
+  --line-700: #2A3752;
+  --paper-100: #F1F3F0;
+  --paper-400: #9AA6BC;
+  --signal-amber: #E8A33D;
+  --pitch-teal: #2FA6A0;
+  --alert-red: #D9534F;
+
+  --font-display: "Zilla Slab", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}

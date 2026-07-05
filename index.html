@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PlusOne Analytics</title>
+  <meta name="description" content="Football match, team, player, odds, and prediction analytics." />
+  <meta name="theme-color" content="#0B1220" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <div id="splash" class="splash">
+    <div class="splash__mark">+1</div>
+    <p>Loading PlusOne Analytics&hellip;</p>
+  </div>
+
+  <div id="app-shell" class="app-shell">
+    <header class="app-header">
+      <a class="app-header__brand" href="#/">
+        <span class="app-header__mark">+1</span>
+        <span class="app-header__name">PlusOne Analytics</span>
+      </a>
+
+      <nav class="app-header__nav">
+        <a href="#/">Today</a>
+        <a href="#/matches">Matches</a>
+      </nav>
+
+      <div class="app-header__status">
+        <span id="db-status" class="db-status">No database loaded</span>
+        <label class="app-header__import" title="Import a .sqlite backup">
+          <input type="file" id="db-file-input" accept=".sqlite,.db" hidden />
+          <span>Import DB</span>
+        </label>
+      </div>
+    </header>
+
+    <main id="app-outlet" class="app-outlet" aria-live="polite"></main>
+
+    <footer class="app-footer">
+      <p>Informational analytics only &mdash; not betting advice. <a href="#/">Terms</a> &middot; <a href="#/">Privacy</a></p>
+    </footer>
+  </div>
+
+  <script src="database/sql-wasm.js"></script>
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
