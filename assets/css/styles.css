@@ -27,6 +27,7 @@ button {
   align-items: center; justify-content: center; gap: var(--space-3);
   background: var(--ink-950); z-index: 100;
 }
+.splash[hidden] { display: none !important; }
 .splash__mark {
   font-family: var(--font-display); font-size: 40px; color: var(--signal-amber);
   border: 2px solid var(--signal-amber); border-radius: 50%;

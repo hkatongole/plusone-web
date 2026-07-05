@@ -88,7 +88,9 @@ async function boot() {
 
 function setSplashVisible(visible) {
   const splash = document.getElementById('splash');
-  if (splash) splash.hidden = !visible;
+  if (!splash) return;
+  splash.hidden = !visible;
+  splash.style.display = visible ? '' : 'none';
 }
 
 function updateFreshnessBadge() {
