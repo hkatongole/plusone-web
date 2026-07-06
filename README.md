@@ -68,6 +68,16 @@ Node/sql.js harness before shipping, not just written and hoped for):**
     League/Cup/International/Youth/Women's) is a lightweight regex read of the
     league's own name text, not a per-league lookup table — labeled as a
     best-effort inference, not authoritative.
+  - **Prediction & Odds Explorer** — a single centralized `/predictions` page
+    (per spec, not a directory + sub-routes like the others) with three tabs:
+    Predictions (`prediction_log`), Bookmaker Odds (`match_odds`), Fortebet
+    Odds (`fortebet_odds`). Filterable by league, status, market (consensus
+    pick), confidence tier, engine, and correctness. CSV export downloads the
+    full filtered set (capped at 5,000 rows), not just the current page. A
+    guest/member view toggle previews the spec's tiered-access requirement —
+    **this is a UI-only preview, not real access control**: there's no account
+    system in this build, both views query the identical dataset, and the
+    banner in the UI says so explicitly rather than implying real gating.
 - **Shell:** `index.html`, `manifest.json`, `service-worker.js` (network-first
   with offline cache fallback — an earlier cache-first version could get stuck
   serving a stale build forever; fixed), dark "data desk" visual direction in
@@ -79,9 +89,9 @@ Everything requiring a **server** — auth, the write-side admin panel
 client-only SQLite reader by construction and needs the Node/Express service
 in spec Section 13.
 
-On the client side, per spec Section 4's remaining items: **Prediction & Odds
-Explorer** (6), **Value/Safe Bets** (7, though `predictionRepository.valueBets()`
-is already written and query-tested), **Model Performance & Calibration** (8,
+On the client side, per spec Section 4's remaining items: **Value/Safe Bets**
+(7, though `predictionRepository.valueBets()` is already written and
+query-tested), **Model Performance & Calibration** (8,
 `engineAccuracy()`/`engineWeightHistory()` already written), **Injuries** as
 its own page (9, currently only shown per-match), **How Predictions Work**
 (10), **Terms of Service** (11), **Privacy Policy** (12). Also not yet built:
@@ -120,12 +130,14 @@ plusone-web/
     router/router.js      tiny hash router
     db/storageAdapter.js  the only module allowed to touch sql.js
     db/repositories/       matchRepository, teamRepository, playerRepository,
-                            leagueRepository, predictionRepository, baseRepository
-    components/            badges.js (real crests via team_logos + fallback art), format.js
+                            leagueRepository, predictionRepository, oddsRepository, baseRepository
+    components/            badges.js (real crests via team_logos + fallback art),
+                            format.js, csvExport.js
     pages/                  home.js, matchExplorer.js, matchDetail.js,
                             teamExplorer.js, teamDetail.js,
                             playerExplorer.js, playerDetail.js,
-                            leagueExplorer.js, leagueDetail.js
+                            leagueExplorer.js, leagueDetail.js,
+                            predictionOddsExplorer.js
 ```
 
 ## Data model changes

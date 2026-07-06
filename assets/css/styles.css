@@ -52,6 +52,7 @@ button {
 .app-header__name { font-weight: 600; }
 .app-header__nav { display: flex; gap: var(--space-4); flex: 1; }
 .app-header__nav a { color: var(--paper-400); font-weight: 500; }
+.app-header__nav a.nav-active { color: var(--signal-amber); }
 .app-header__status { display: flex; align-items: center; gap: var(--space-3); }
 .db-status { font-size: 12px; color: var(--paper-400); }
 .db-status--ready { color: var(--pitch-teal); }
@@ -146,6 +147,22 @@ button {
 }
 .team-card--mini:hover { background: var(--ink-700, var(--line-700)); text-decoration: none; }
 .team-card__pts { margin-left: auto; color: var(--paper-400); font-size: 11px; }
+
+.access-banner {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4);
+  font-size: 13px;
+}
+.access-banner--guest { background: var(--ink-900); border: 1px solid var(--line-700); }
+.access-banner--member { background: rgba(47, 166, 160, 0.1); border: 1px solid var(--pitch-teal); }
+.access-banner__note { color: var(--paper-400); font-size: 11px; font-style: italic; flex-basis: 100%; }
+
+.explorer-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
+.export-btn {
+  background: var(--pitch-teal); color: var(--ink-950); border: none; border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.export-btn--disabled { background: var(--ink-800); color: var(--paper-400); cursor: not-allowed; }
 
 .pagination { display: flex; gap: var(--space-3); align-items: center; margin-top: var(--space-4); color: var(--paper-400); font-size: 13px; }
 
@@ -261,8 +278,28 @@ button {
 }
 .file-drop input { display: none; }
 
+/* Bottom nav: hidden on desktop (top nav handles navigation there), the
+   primary navigation control on mobile since the top nav has no room for six
+   sections plus the DB status/import controls on a narrow screen. */
+.bottom-nav { display: none; }
+.bottom-nav__item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: var(--space-2) 0; color: var(--paper-400); font-size: 10px;
+}
+.bottom-nav__item svg { width: 22px; height: 22px; }
+.bottom-nav__item:hover { text-decoration: none; }
+.bottom-nav__item--active, .bottom-nav__item.nav-active { color: var(--signal-amber); }
+
 @media (max-width: 640px) {
   .app-header__nav { display: none; }
   .match-detail__scoreboard { grid-template-columns: 1fr; }
   .match-detail__center { order: -1; }
+
+  .bottom-nav {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+    background: var(--ink-900); border-top: 1px solid var(--line-700);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .app-outlet { padding-bottom: calc(var(--space-6) + 64px); }
+  .app-footer { display: none; }
 }

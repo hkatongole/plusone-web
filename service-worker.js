@@ -17,6 +17,8 @@ const SHELL_ASSETS = [
   './assets/js/db/repositories/predictionRepository.js',
   './assets/js/db/repositories/playerRepository.js',
   './assets/js/db/repositories/leagueRepository.js',
+  './assets/js/db/repositories/oddsRepository.js',
+  './assets/js/components/csvExport.js',
   './assets/js/pages/home.js',
   './assets/js/pages/matchExplorer.js',
   './assets/js/pages/matchDetail.js',
@@ -26,6 +28,7 @@ const SHELL_ASSETS = [
   './assets/js/pages/playerDetail.js',
   './assets/js/pages/leagueExplorer.js',
   './assets/js/pages/leagueDetail.js',
+  './assets/js/pages/predictionOddsExplorer.js',
   './database/sql-wasm.js',
   './database/sql-wasm.wasm',
 ];

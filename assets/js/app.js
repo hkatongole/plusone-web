@@ -35,6 +35,10 @@ import {
   renderLeagueOdds,
   renderLeagueSeasons,
 } from './pages/leagueDetail.js';
+import { renderPredictionOddsExplorer } from './pages/predictionOddsExplorer.js';
+import { predictionRepository } from './db/repositories/predictionRepository.js';
+import { oddsRepository } from './db/repositories/oddsRepository.js';
+import { toCsv, downloadCsv } from './components/csvExport.js';
 
 // Single application bootstrap namespace (Section 13.9) -- the one allowed global.
 window.PlusOne = window.PlusOne || {};
@@ -99,7 +103,8 @@ async function boot() {
       .register('/leagues/:league/statistics', renderLeagueStatistics)
       .register('/leagues/:league/predictions', renderLeaguePredictions)
       .register('/leagues/:league/odds', renderLeagueOdds)
-      .register('/leagues/:league/seasons', renderLeagueSeasons);
+      .register('/leagues/:league/seasons', renderLeagueSeasons)
+      .register('/predictions', renderPredictionOddsExplorer);
     window.PlusOne.router = router;
 
     logStep('Initializing sql.js (WASM runtime)...');
@@ -123,6 +128,8 @@ async function boot() {
     updateFreshnessBadge();
     wireDbImport();
     router.start('/');
+    updateNavActiveState();
+    window.addEventListener('hashchange', updateNavActiveState);
     logStep('App ready.');
   } catch (err) {
     logStep(`Boot failed: ${err.message}`);
@@ -190,6 +197,15 @@ async function handleImport(file) {
   }
 }
 
+function updateNavActiveState() {
+  const path = (location.hash.slice(1) || '/').split('?')[0];
+  document.querySelectorAll('[data-nav]').forEach((el) => {
+    const nav = el.getAttribute('data-nav');
+    const isActive = nav === '/' ? path === '/' : path === nav || path.startsWith(nav + '/');
+    el.classList.toggle('nav-active', isActive);
+  });
+}
+
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js').catch((err) => {
@@ -203,13 +219,50 @@ function registerServiceWorker() {
 // Click-through for table rows that carry a data-href (used by Match Explorer).
 document.addEventListener('click', (e) => {
   const row = e.target.closest('[data-href]');
-  if (row) location.hash = row.getAttribute('data-href');
+  if (row) {
+    location.hash = row.getAttribute('data-href');
+    return;
+  }
+
+  const exportBtn = e.target.closest('[data-export]');
+  if (exportBtn) handleExport(exportBtn);
 });
+
+function handleExport(btn) {
+  const kind = btn.dataset.export;
+  const league = btn.dataset.league || null;
+
+  if (kind === 'predictions') {
+    const rows = predictionRepository.exportRows({
+      league,
+      status: btn.dataset.status || null,
+      market: btn.dataset.market || null,
+      confidence: btn.dataset.confidence || null,
+      engine: btn.dataset.engine || 'consensus',
+      engineCorrect: btn.dataset.engineCorrect || null,
+    });
+    const cols = [
+      { key: 'match_date', label: 'Date' }, { key: 'league', label: 'League' },
+      { key: 'home_team', label: 'Home' }, { key: 'away_team', label: 'Away' },
+      { key: 'consensus_outcome', label: 'Consensus' }, { key: 'dc_outcome', label: 'DC' },
+      { key: 'ml_outcome', label: 'ML' }, { key: 'legacy_outcome', label: 'Legacy' },
+      { key: 'confidence', label: 'Confidence' }, { key: 'status', label: 'Status' },
+      { key: 'actual_outcome', label: 'Actual Result' }, { key: 'consensus_correct', label: 'Consensus Correct' },
+    ];
+    downloadCsv('predictions.csv', toCsv(rows, cols));
+  } else if (kind === 'match_odds') {
+    const rows = oddsRepository.exportMatchOdds({ league });
+    downloadCsv('match_odds.csv', toCsv(rows));
+  } else if (kind === 'fortebet_odds') {
+    const rows = oddsRepository.exportFortebetOdds({ league });
+    downloadCsv('fortebet_odds.csv', toCsv(rows));
+  }
+}
 
 // Filter bar submit -> re-navigate with query params (Match Explorer).
 document.addEventListener('submit', (e) => {
   const id = e.target.id;
-  if (!['match-filter-form', 'team-filter-form', 'team-results-filter-form', 'player-filter-form', 'league-season-form', 'league-results-filter-form'].includes(id)) return;
+  if (!['match-filter-form', 'team-filter-form', 'team-results-filter-form', 'player-filter-form', 'league-season-form', 'league-results-filter-form', 'prediction-explorer-filter-form'].includes(id)) return;
   e.preventDefault();
   const data = new FormData(e.target);
   const params = new URLSearchParams();
@@ -233,6 +286,12 @@ document.addEventListener('submit', (e) => {
   } else if (id === 'league-results-filter-form') {
     const league = e.target.dataset.league;
     location.hash = `#/leagues/${league}/results${qs ? '?' + qs : ''}`;
+  } else if (id === 'prediction-explorer-filter-form') {
+    // Preserve tab/view from the current URL -- the form itself only carries filters.
+    const current = new URLSearchParams(location.hash.split('?')[1] || '');
+    params.set('tab', e.target.dataset.tab);
+    if (current.get('view')) params.set('view', current.get('view'));
+    location.hash = `#/predictions?${params.toString()}`;
   }
 });
 

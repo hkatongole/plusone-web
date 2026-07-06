@@ -12,7 +12,11 @@ class PredictionRepository extends BaseRepository {
     this.defaultOrder = 'match_date DESC';
   }
 
-  filterPredictions({ league, status, engine, page = 1, pageSize = 25 } = {}) {
+  /** Centralized filterable browse for the Prediction & Odds Explorer (Section 4
+   *  item 6). `market` filters on consensus_outcome (the closest concept this
+   *  schema has to a "market" for the core prediction); engineCorrect filters
+   *  on an already-graded correctness flag, never a recomputed one. */
+  filterPredictions({ league, status, market, confidence, engine = 'consensus', engineCorrect, page = 1, pageSize = 25 } = {}) {
     const clauses = [];
     const params = [];
     if (league) {
@@ -23,8 +27,50 @@ class PredictionRepository extends BaseRepository {
       clauses.push('status = ?');
       params.push(status);
     }
+    if (market && this.columns(['consensus_outcome']).length) {
+      clauses.push('consensus_outcome = ?');
+      params.push(market);
+    }
+    if (confidence && this.columns(['confidence']).length) {
+      clauses.push('confidence = ?');
+      params.push(confidence);
+    }
+    if (engineCorrect !== undefined && engineCorrect !== '' && engineCorrect !== null) {
+      const col = `${engine}_correct`;
+      if (this.columns([col]).length) {
+        clauses.push(`"${col}" = ?`);
+        params.push(engineCorrect === 'true' || engineCorrect === true ? 1 : 0);
+      }
+    }
     const whereSql = clauses.length ? clauses.join(' AND ') : '1=1';
     return this.paginate({ page, pageSize, whereSql, params, orderBy: this.defaultOrder });
+  }
+
+  /** Same filters as filterPredictions but unpaginated, capped, for CSV export --
+   *  exports exactly the filtered dataset the user is looking at, never a
+   *  separate or fabricated dataset (Section 4 item 6's guest/member guarantee). */
+  exportRows({ league, status, market, confidence, engine = 'consensus', engineCorrect, limit = 5000 } = {}) {
+    const { rows } = this.filterPredictions({ league, status, market, confidence, engine, engineCorrect, page: 1, pageSize: limit });
+    return rows;
+  }
+
+  distinctLeagues() {
+    if (!this.exists()) return [];
+    return storage.all(`SELECT DISTINCT league FROM prediction_log WHERE league IS NOT NULL ORDER BY league`).map((r) => r.league);
+  }
+
+  distinctMarkets() {
+    if (!this.exists() || this.columns(['consensus_outcome']).length === 0) return [];
+    return storage
+      .all(`SELECT DISTINCT consensus_outcome FROM prediction_log WHERE consensus_outcome IS NOT NULL ORDER BY consensus_outcome`)
+      .map((r) => r.consensus_outcome);
+  }
+
+  distinctConfidences() {
+    if (!this.exists() || this.columns(['confidence']).length === 0) return [];
+    return storage
+      .all(`SELECT DISTINCT confidence FROM prediction_log WHERE confidence IS NOT NULL ORDER BY confidence`)
+      .map((r) => r.confidence);
   }
 
   /** Per-engine accuracy, computed with SQL AVG() over already-graded rows only
