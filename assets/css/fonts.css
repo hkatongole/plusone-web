@@ -1,0 +1,55 @@
+/* Self-hosted fonts (vendored via npm @fontsource, not a CDN) so they actually
+   load offline in the installed PWA, and so they exist at all -- the previous
+   version of this app declared "Zilla Slab" in tokens.css but never linked it
+   from anywhere, so every headline/score silently fell back to a generic
+   system serif the whole time. */
+
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/archivo-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/archivo-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('../fonts/archivo-latin-900-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/inter-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/inter-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/inter-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/inter-latin-700-normal.woff2') format('woff2');
+}

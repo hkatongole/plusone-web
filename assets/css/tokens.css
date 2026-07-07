@@ -1,16 +1,22 @@
 :root {
-  --ink-950: #0B1220;
-  --ink-900: #121B2E;
-  --ink-800: #1B2740;
-  --line-700: #2A3752;
-  --paper-100: #F1F3F0;
-  --paper-400: #9AA6BC;
-  --signal-amber: #E8A33D;
-  --pitch-teal: #2FA6A0;
-  --alert-red: #D9534F;
+  /* Near-black (not navy) -- deliberately distinct from both the orange
+     scores app and the green minimal app used as references. */
+  --ink-950: #0B0C10;
+  --ink-900: #15171C;
+  --ink-800: #1C1E24;
+  --line-700: #262932;
+  --paper-100: #F5F5F2;
+  --paper-400: #9A9CA6;    /* 7.15:1 on --ink-950, verified via WCAG relative-luminance formula */
 
-  --font-display: "Zilla Slab", Georgia, serif;
-  --font-body: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
+  --signal-gold: #F0A93E;
+  --signal-gold-soft: rgba(240, 169, 62, 0.14);
+  --pitch-teal: #2FA6A0;
+  --positive: #22C55E;      /* verified pairing from Comparative Analysis Dashboard reference */
+  --negative: #EF4444;
+  --neutral-delta: #6B7280;
+
+  --font-display: 'Archivo', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, Segoe UI, sans-serif;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -20,6 +26,16 @@
   --space-8: 32px;
   --space-12: 48px;
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

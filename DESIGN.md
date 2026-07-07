@@ -1,59 +1,93 @@
 # DESIGN.md — PlusOne Analytics Web
 
-## Direction: "the data desk, not the stadium"
-Most sports-analytics UIs reach for pitch-green and floodlight clichés. PlusOne's
-actual subject is the *broadcast graphics desk* behind a match — the wall of
-scoreboards, odds tickers, and probability bars a producer watches, not the
-grass itself. That's the visual world this app borrows from: dense, legible,
-slightly instrumented, calm under a lot of numbers.
+## Direction: near-black + gold, informed by real reference apps
+This system replaced an earlier "navy + amber" direction that looked reasonable
+on paper but had a real bug: the display font was declared in tokens.css and
+never actually linked from anywhere, so every headline/score silently fell
+back to a generic system serif the whole time.
+
+The current direction was built after reviewing 12 screenshots of three real
+sports apps (a dense orange live-scores app, a prediction app using
+probability rings, and a minimal black/green scores app) plus a verified
+external "Predictive Analytics" / "Comparative Analysis Dashboard" reference
+spec. Rather than clone any one of them, specific patterns were adopted where
+they mapped to something PlusOne actually has:
+
+- **Probability rings** (from the prediction app) — the signature element,
+  used for the consensus Home/Draw/Away call, since predictions are the
+  product. Pure CSS `conic-gradient`, no SVG/canvas.
+- **Icon + label detail rows** (from the minimal app) — for match info, kept
+  restrained rather than dense.
+- **Delta-colored comparative bars** (validated against the external
+  "Comparative Analysis Dashboard" spec) — the winning side's number is
+  green, the losing side's grey, and the bar fill is proportional to the
+  actual ratio of the two values, computed live, not eyeballed.
+- **Card-row match lists** (from the orange app) — crest + name left, time/
+  score right, rounded card, instead of a plain HTML table row.
+
+Deliberately not adopted: the orange accent (used by one reference app) and
+green accent (used by the other) — near-black + gold reads as its own thing
+rather than a clone of either.
 
 ## Color
-| Token | Hex | Use |
-|---|---|---|
-| `--ink-950` | `#0B1220` | App background |
-| `--ink-900` | `#121B2E` | Card/panel surface |
-| `--ink-800` | `#1B2740` | Raised surface, table header |
-| `--line-700` | `#2A3752` | Borders, dividers |
-| `--paper-100` | `#F1F3F0` | Primary text |
-| `--paper-400` | `#9AA6BC` | Secondary text |
-| `--signal-amber` | `#E8A33D` | Primary accent — confidence, headline pick, CTAs |
-| `--pitch-teal` | `#2FA6A0` | Secondary accent — agreement, positive grading |
-| `--alert-red` | `#D9534F` | Errors, incorrect grading |
+| Token | Hex | Use | Verified contrast |
+|---|---|---|---|
+| `--ink-950` | `#0B0C10` | App background | — |
+| `--ink-900` | `#15171C` | Card/panel surface | — |
+| `--ink-800` | `#1C1E24` | Raised surface, table header | — |
+| `--line-700` | `#262932` | Borders, dividers | — |
+| `--paper-100` | `#F5F5F2` | Primary text | 17.9:1 on ink-950 |
+| `--paper-400` | `#9A9CA6` | Secondary text | 7.15:1 on ink-950 |
+| `--signal-gold` | `#F0A93E` | Primary accent — confidence, headline pick, CTAs | 9.73:1 on ink-950 |
+| `--pitch-teal` | `#2FA6A0` | Secondary accent — agreement, export actions | — |
+| `--positive` | `#22C55E` | Winning value in comparisons, correct grading | 7.87:1 on ink-900 |
+| `--negative` | `#EF4444` | Losing/incorrect | 4.76:1 on ink-900 |
 
-Deliberately not the cream/terracotta or near-black/acid-green defaults — ink
-navy reads as "control room," not "landing page."
+Contrast ratios computed via the WCAG relative-luminance formula, not eyeballed
+— all pairs clear the 4.5:1 AA threshold for normal text.
 
 ## Type
-- **Display / scoreboard numbers:** `"Zilla Slab", serif` — a slab serif so
-  scorelines and percentages read like scoreboard digits, used only for
-  numerals and headline outcomes, set with tabular figures.
-- **Body / UI:** `"Inter", system-ui, sans-serif` — neutral, dense-data-safe,
-  used for everything else so the slab face stays a signature rather than
-  wallpaper.
-- **Scale:** 12 / 14 / 16 / 20 / 28 / 40px, 1.4 line-height for body, 1.1 for
-  display sizes.
+Both fonts are **self-hosted** (vendored via npm `@fontsource`, not a CDN
+link) under `assets/fonts/` — 7 woff2 files, ~150KB total — so they actually
+load offline in the installed PWA, and so they exist at all.
+
+- **Display (`--font-display`):** Archivo, weights 500/700/900. Used for
+  headlines, scores, ring percentages, stat values. Weight 900 reads close to
+  a "black"/condensed treatment without needing a separate font file.
+- **Body (`--font-body`):** Inter, weights 400/500/600/700.
+- Numerals are never mixed with the fallback stack silently — `font-display:
+  swap` is set, and Archivo/Inter are the only families referenced anywhere
+  in the CSS.
 
 ## Layout
-- Card grid for scannable entities (fixtures, teams), dense tables for
-  Explorer list views, a fixed two-column scoreboard layout for match detail.
 - 8px spacing scale (4/8/12/16/24/32/48).
-- No border-radius above 8px — this is an instrument panel, not a marketing
-  page; corners stay quiet so probability bars and badges read as data, not
-  decoration.
-
-## Signature element: the halfway line
-Every major section break renders as a thin horizontal rule with a single
-center dot — a minimal halfway-line-and-kickoff-spot motif — instead of a
-generic `<hr>` or card shadow. It appears exactly once per section boundary,
-never decoratively repeated, so it stays a signature rather than a texture.
+- Corners: 8px small, 14px medium (cards/panels), 18px large (hero cards).
+- Match detail uses **nested tabs** (Prediction / Comparison / H2H / Odds &
+  Conditions) instead of one long scrolling page — matches the pattern in
+  every reference app's match-detail screen, and is consistent with how
+  Team/Player/League Explorer already use tabs.
+- Tables scroll horizontally on narrow screens (`.table-scroll`) rather than
+  wrapping cell content into a multi-line mess.
 
 ## Components
-- **Badge (`badges.js`):** monogram-on-hue fallback for team/league marks,
-  silhouette fallback for players — real crests slot in later via the Media
-  Library (Section 12.5) without changing any calling code.
-- **Prob bar:** horizontal track + fill + numeric label, used identically for
-  every engine (DC/ML/Legacy/Consensus) so the four never look visually
-  distinct in a way that implies one is "the real" number.
-- **Pill:** small rounded label for confidence/value-gap/status chips.
-- Icon set: inline SVG only for now (single silhouette icon in use); adopt
-  Lucide wholesale once more admin/nav icons are needed, per Section 12.5.
+- **Probability ring:** `.ring` — CSS-only conic-gradient donut. Highest value
+  gets gold, others neutral grey — never color communicated without the
+  number also shown (WCAG 1.4.1, verified against the external UX guideline
+  reference: "don't use color alone for status").
+- **Comparative bar:** `.compare-row` — two-segment proportional bar computed
+  from the actual two values (not a fixed midpoint), winning side's number
+  colored green, losing side grey.
+- **Badge (`badges.js`):** real team crests via the `team_logos` table when
+  present, monogram-on-hue fallback otherwise, with an inline `onerror` swap
+  if a hotlinked crest URL 404s.
+- **Bottom nav (mobile only):** icon + label, `aria`-friendly since every icon
+  has a visible text label, not icon-only.
+- `prefers-reduced-motion` is respected globally (tokens.css) — animations and
+  transitions collapse to near-zero duration for anyone who's set that
+  preference at the OS level.
+
+## What's still using plain bars, not rings
+Per-engine (DC/ML/Legacy) probabilities stay as compact horizontal bars, not
+rings — four engines × three outcomes would be twelve rings competing for
+attention. Rings are reserved for the single headline consensus call, which
+is the one number most people actually look at first.

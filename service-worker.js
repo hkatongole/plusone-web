@@ -3,8 +3,16 @@ const SHELL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './assets/css/fonts.css',
   './assets/css/tokens.css',
   './assets/css/styles.css',
+  './assets/fonts/archivo-latin-500-normal.woff2',
+  './assets/fonts/archivo-latin-700-normal.woff2',
+  './assets/fonts/archivo-latin-900-normal.woff2',
+  './assets/fonts/inter-latin-400-normal.woff2',
+  './assets/fonts/inter-latin-500-normal.woff2',
+  './assets/fonts/inter-latin-600-normal.woff2',
+  './assets/fonts/inter-latin-700-normal.woff2',
   './assets/js/app.js',
   './assets/js/router/router.js',
   './assets/js/components/badges.js',
@@ -31,6 +39,8 @@ const SHELL_ASSETS = [
   './assets/js/pages/predictionOddsExplorer.js',
   './database/sql-wasm.js',
   './database/sql-wasm.wasm',
+  './assets/icons/icon-192.png',
+  './assets/icons/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
