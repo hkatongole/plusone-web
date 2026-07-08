@@ -38,6 +38,8 @@ const SHELL_ASSETS = [
   './assets/js/pages/leagueDetail.js',
   './assets/js/pages/predictionOddsExplorer.js',
   './assets/js/pages/valueBets.js',
+  './assets/js/pages/modelPerformance.js',
+  './assets/js/components/chart.js',
   './database/sql-wasm.js',
   './database/sql-wasm.wasm',
   './assets/icons/icon-192.png',

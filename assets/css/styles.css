@@ -55,8 +55,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
   width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
 }
 .app-header__name { font-weight: 700; font-family: var(--font-display); font-size: 15px; }
-.app-header__nav { display: flex; gap: var(--space-4); flex: 1; }
-.app-header__nav a { color: var(--paper-400); font-weight: 600; font-size: 13px; }
+.app-header__nav { display: flex; gap: var(--space-4); flex: 1; overflow-x: auto; white-space: nowrap; }
+.app-header__nav a { color: var(--paper-400); font-weight: 600; font-size: 13px; flex-shrink: 0; }
 .app-header__nav a:hover { color: var(--paper-100); text-decoration: none; }
 .app-header__nav a.nav-active { color: var(--signal-gold); }
 .app-header__status { display: flex; align-items: center; gap: var(--space-3); }
@@ -139,6 +139,9 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 
 /* Panels */
 .panel { background: var(--ink-900); border: 1px solid var(--line-700); border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4); overflow-x: auto; }
+.chart { width: 100%; }
+.chart svg { display: block; width: 100%; height: auto; }
+.chart__legend { display: flex; flex-wrap: wrap; margin-top: var(--space-2); }
 .panel h3 { margin-top: 0; font-family: var(--font-display); font-weight: 700; font-size: 15px; }
 
 /* Match detail scoreboard */
@@ -288,8 +291,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); }
 .file-drop input { display: none; }
 
 /* Bottom nav */
-.bottom-nav { display: none; }
-.bottom-nav__item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-2) 0; color: var(--paper-400); font-size: 10px; font-weight: 600; }
+.bottom-nav { display: none; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.bottom-nav__item { flex: 0 0 auto; min-width: 60px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-2) var(--space-1); color: var(--paper-400); font-size: 10px; font-weight: 600; }
 .bottom-nav__item svg { width: 22px; height: 22px; }
 .bottom-nav__item:hover { text-decoration: none; }
 .bottom-nav__item.nav-active { color: var(--signal-gold); }

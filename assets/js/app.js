@@ -37,6 +37,7 @@ import {
 } from './pages/leagueDetail.js';
 import { renderPredictionOddsExplorer } from './pages/predictionOddsExplorer.js';
 import { renderValueBets } from './pages/valueBets.js';
+import { renderModelPerformance } from './pages/modelPerformance.js';
 import { predictionRepository } from './db/repositories/predictionRepository.js';
 import { oddsRepository } from './db/repositories/oddsRepository.js';
 import { toCsv, downloadCsv } from './components/csvExport.js';
@@ -106,7 +107,8 @@ async function boot() {
       .register('/leagues/:league/odds', renderLeagueOdds)
       .register('/leagues/:league/seasons', renderLeagueSeasons)
       .register('/predictions', renderPredictionOddsExplorer)
-      .register('/value-bets', renderValueBets);
+      .register('/value-bets', renderValueBets)
+      .register('/model-performance', renderModelPerformance);
     window.PlusOne.router = router;
 
     logStep('Initializing sql.js (WASM runtime)...');

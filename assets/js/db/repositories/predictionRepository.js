@@ -115,6 +115,72 @@ class PredictionRepository extends BaseRepository {
     });
   }
 
+  /** Monthly accuracy per engine, over graded predictions only. Bucketed by
+   *  match_date (not predicted_at) since that's what's populated consistently. */
+  accuracyOverTime({ league = null } = {}) {
+    if (!this.exists()) return [];
+    const engineCols = ['consensus_correct', 'dc_correct', 'ml_correct', 'legacy_correct'].filter(
+      (c) => this.columns([c]).length
+    );
+    if (engineCols.length === 0 || !this.columns(['match_date']).length) return [];
+
+    const where = ["status = 'graded'"];
+    const params = [];
+    if (league) {
+      where.push('league = ?');
+      params.push(league);
+    }
+    const selects = engineCols
+      .map((c) => `AVG(CASE WHEN "${c}" = 1 THEN 1.0 WHEN "${c}" = 0 THEN 0 ELSE NULL END) AS ${c}_rate`)
+      .join(', ');
+
+    const rows = storage.all(
+      `SELECT strftime('%Y-%m', match_date) AS month, ${selects}, COUNT(*) AS n
+       FROM prediction_log WHERE ${where.join(' AND ')}
+       GROUP BY month ORDER BY month`,
+      params
+    );
+    return rows;
+  }
+
+  /** Calibration: bucket graded predictions by the STATED probability of the
+   *  outcome that was actually predicted (consensus_outcome), then compare
+   *  against the observed frequency of that pick being correct. Pure SQL
+   *  aggregation over stored columns -- never recomputes a probability. */
+  calibrationCurve({ league = null } = {}) {
+    if (!this.exists() || this.columns(['consensus_home_prob', 'consensus_draw_prob', 'consensus_away_prob', 'consensus_outcome', 'consensus_correct']).length < 5) {
+      return [];
+    }
+    const where = ["status = 'graded'", 'consensus_outcome IS NOT NULL', 'consensus_correct IS NOT NULL'];
+    const params = [];
+    if (league) {
+      where.push('league = ?');
+      params.push(league);
+    }
+    const rows = storage.all(
+      `SELECT
+         MIN(9, CAST(stated_prob * 10 AS INT)) AS bucket,
+         AVG(actual_correct) AS actual_frequency,
+         AVG(stated_prob) AS avg_stated_prob,
+         COUNT(*) AS n
+       FROM (
+         SELECT
+           CASE consensus_outcome
+             WHEN 'Home Win' THEN consensus_home_prob
+             WHEN 'Draw' THEN consensus_draw_prob
+             WHEN 'Away Win' THEN consensus_away_prob
+           END AS stated_prob,
+           consensus_correct AS actual_correct
+         FROM prediction_log
+         WHERE ${where.join(' AND ')}
+       )
+       WHERE stated_prob IS NOT NULL
+       GROUP BY bucket ORDER BY bucket`,
+      params
+    );
+    return rows;
+  }
+
   engineWeightHistory() {
     if (!storage.hasTable('engine_weights')) return [];
     return storage.all(`SELECT * FROM engine_weights ORDER BY computed_at ASC`);
