@@ -36,6 +36,7 @@ import {
   renderLeagueSeasons,
 } from './pages/leagueDetail.js';
 import { renderPredictionOddsExplorer } from './pages/predictionOddsExplorer.js';
+import { renderValueBets } from './pages/valueBets.js';
 import { predictionRepository } from './db/repositories/predictionRepository.js';
 import { oddsRepository } from './db/repositories/oddsRepository.js';
 import { toCsv, downloadCsv } from './components/csvExport.js';
@@ -104,7 +105,8 @@ async function boot() {
       .register('/leagues/:league/predictions', renderLeaguePredictions)
       .register('/leagues/:league/odds', renderLeagueOdds)
       .register('/leagues/:league/seasons', renderLeagueSeasons)
-      .register('/predictions', renderPredictionOddsExplorer);
+      .register('/predictions', renderPredictionOddsExplorer)
+      .register('/value-bets', renderValueBets);
     window.PlusOne.router = router;
 
     logStep('Initializing sql.js (WASM runtime)...');
@@ -262,7 +264,7 @@ function handleExport(btn) {
 // Filter bar submit -> re-navigate with query params (Match Explorer).
 document.addEventListener('submit', (e) => {
   const id = e.target.id;
-  if (!['match-filter-form', 'team-filter-form', 'team-results-filter-form', 'player-filter-form', 'league-season-form', 'league-results-filter-form', 'prediction-explorer-filter-form'].includes(id)) return;
+  if (!['match-filter-form', 'team-filter-form', 'team-results-filter-form', 'player-filter-form', 'league-season-form', 'league-results-filter-form', 'prediction-explorer-filter-form', 'value-bets-filter-form'].includes(id)) return;
   e.preventDefault();
   const data = new FormData(e.target);
   const params = new URLSearchParams();
@@ -292,6 +294,8 @@ document.addEventListener('submit', (e) => {
     params.set('tab', e.target.dataset.tab);
     if (current.get('view')) params.set('view', current.get('view'));
     location.hash = `#/predictions?${params.toString()}`;
+  } else if (id === 'value-bets-filter-form') {
+    location.hash = `#/value-bets${qs ? '?' + qs : ''}`;
   }
 });
 

@@ -42,6 +42,7 @@ export async function renderHome() {
           <strong>${formatDateTime(dateStr)}</strong>
         </p>
         <p class="data-as-of">${dataAsOfLabel(asOf)}</p>
+        <p style="margin-top:8px;"><a href="#/value-bets">View Value &amp; Safe Bets &rarr;</a></p>
       </header>
       <div class="card-grid">${cards}</div>
     </section>

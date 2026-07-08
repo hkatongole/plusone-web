@@ -37,6 +37,7 @@ const SHELL_ASSETS = [
   './assets/js/pages/leagueExplorer.js',
   './assets/js/pages/leagueDetail.js',
   './assets/js/pages/predictionOddsExplorer.js',
+  './assets/js/pages/valueBets.js',
   './database/sql-wasm.js',
   './database/sql-wasm.wasm',
   './assets/icons/icon-192.png',

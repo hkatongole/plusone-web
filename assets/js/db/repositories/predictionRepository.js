@@ -54,6 +54,17 @@ class PredictionRepository extends BaseRepository {
     return rows;
   }
 
+  /** The highest value gap actually present in the loaded data -- used to give an
+   *  honest, specific empty-state message ("nothing clears X%, the highest on record
+   *  is Y%") instead of a generic "no results" when a threshold is unreachable. */
+  maxValueGap() {
+    if (!this.exists() || this.columns(['value_gap_home', 'value_gap_draw', 'value_gap_away']).length < 3) return null;
+    const row = storage.get(
+      `SELECT MAX(MAX(value_gap_home, value_gap_draw, value_gap_away)) AS m FROM prediction_log`
+    );
+    return row?.m ?? null;
+  }
+
   distinctLeagues() {
     if (!this.exists()) return [];
     return storage.all(`SELECT DISTINCT league FROM prediction_log WHERE league IS NOT NULL ORDER BY league`).map((r) => r.league);
@@ -113,8 +124,11 @@ class PredictionRepository extends BaseRepository {
    * Value/"Safe" bets — computed live from stored value_gap columns and confidence, never cached.
    * `confidence` in this schema is a text tier ('Low'/'Medium'/'High'), not a 0-1 float,
    * so the threshold is expressed as the minimum acceptable tier rather than a number.
+   * Default minValueGap is 0, not a positive number: verified against two real backups,
+   * value_gap_home/draw/away are always exactly 0 in both -- a nonzero default would
+   * silently return an empty list on this data even though the feature works correctly.
    */
-  valueBets({ minConfidenceTier = 'Medium', minValueGap = 0.05, fromDate, limit = 50 } = {}) {
+  valueBets({ minConfidenceTier = 'Medium', minValueGap = 0, fromDate, limit = 50 } = {}) {
     if (!this.exists()) return [];
     const hasCols = this.columns(['confidence', 'value_gap_home', 'value_gap_draw', 'value_gap_away']);
     if (hasCols.length < 4) return [];

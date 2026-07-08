@@ -78,6 +78,15 @@ Node/sql.js harness before shipping, not just written and hoped for):**
     **this is a UI-only preview, not real access control**: there's no account
     system in this build, both views query the identical dataset, and the
     banner in the UI says so explicitly rather than implying real gating.
+  - **Value & Safe Bets** — `/value-bets`, configurable confidence-tier and
+    value-gap thresholds, recomputed live on every filter change (never a
+    cached/static list, per spec). Default value-gap threshold is 0%, not a
+    positive number — verified against two real backups that `value_gap_*`
+    columns are always exactly 0 in both, so a nonzero default would have
+    silently shown "no results" on real data even though the feature works.
+    The empty state is diagnostic rather than generic: if a requested
+    threshold exceeds the highest value gap actually present in the loaded
+    file, it says so with the real number instead of just "no matches."
 - **Shell:** `index.html`, `manifest.json`, `service-worker.js` (network-first
   with offline cache fallback — an earlier cache-first version could get stuck
   serving a stale build forever; fixed), dark "data desk" visual direction in
@@ -89,15 +98,13 @@ Everything requiring a **server** — auth, the write-side admin panel
 client-only SQLite reader by construction and needs the Node/Express service
 in spec Section 13.
 
-On the client side, per spec Section 4's remaining items: **Value/Safe Bets**
-(7, though `predictionRepository.valueBets()` is already written and
-query-tested), **Model Performance & Calibration** (8,
-`engineAccuracy()`/`engineWeightHistory()` already written), **Injuries** as
-its own page (9, currently only shown per-match), **How Predictions Work**
-(10), **Terms of Service** (11), **Privacy Policy** (12). Also not yet built:
-the Poisson-derived secondary markets (Over/Under, BTTS%) and heuristic Risk
-Flags seen in the reference extension — legitimate to add, but a distinct
-feature from anything above.
+On the client side, per spec Section 4's remaining items: **Model Performance
+& Calibration** (8, `engineAccuracy()`/`engineWeightHistory()` already
+written), **Injuries** as its own page (9, currently only shown per-match),
+**How Predictions Work** (10), **Terms of Service** (11), **Privacy Policy**
+(12). Also not yet built: the Poisson-derived secondary markets (Over/Under,
+BTTS%) and heuristic Risk Flags seen in the reference extension — legitimate
+to add, but a distinct feature from anything above.
 
 **A schema landmine worth knowing about:** `match_odds.season` has been
 observed in a compact format (`'2526'`) while `matches.season`/
@@ -137,7 +144,7 @@ plusone-web/
                             teamExplorer.js, teamDetail.js,
                             playerExplorer.js, playerDetail.js,
                             leagueExplorer.js, leagueDetail.js,
-                            predictionOddsExplorer.js
+                            predictionOddsExplorer.js, valueBets.js
 ```
 
 ## Data model changes
